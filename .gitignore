@@ -20,6 +20,13 @@ minecraft-data/.papermc-manifest.json
 minecraft-data/.rcon-cli.env
 minecraft-data/.rcon-cli.yaml
 
+# Generated server libraries and runtime artifacts
+minecraft-data/libraries/
+minecraft-data/versions/
+minecraft-data/paper-*.jar
+minecraft-data/plugins/.paper-remapped/
+minecraft-data/plugins/spark/tmp/
+
 # Backups
 docker/backups/
 
