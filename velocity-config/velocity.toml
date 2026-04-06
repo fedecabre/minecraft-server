@@ -1,5 +1,5 @@
 # Velocity Configuration
-# Generated for Docker setup
+# Updated for config version 2.0
 
 [servers]
 lobby = "minecraft:25566"
@@ -9,7 +9,6 @@ lobby = "minecraft:25566"
 
 [advanced]
 force-key-authentication = true
-forwarding-secret = "583ac1941f4779405f43848c70010d0f"
 
 [query]
 enabled = true
