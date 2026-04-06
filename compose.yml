@@ -10,9 +10,12 @@ services:
       - --entrypoints.websecure.address=:16400
       - --providers.docker=true
       - --api.dashboard=true
-      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+      - --certificatesresolvers.myresolver.acme.dnschallenge.provider=duckdns
+      - --certificatesresolvers.myresolver.acme.dnschallenge.delayBeforeCheck=15s
       - --certificatesresolvers.myresolver.acme.email=${EMAIL}
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    environment:
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
     ports:
       - "80:80"
       - "16400:16400"
