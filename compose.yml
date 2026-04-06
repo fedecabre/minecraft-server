@@ -5,6 +5,7 @@ services:
     image: traefik:v2.11
     container_name: traefik
     command:
+      - --entrypoints.web.address=:80
       - --entrypoints.minecraft.address=:25565
       - --entrypoints.websecure.address=:443
       - --providers.docker=true
@@ -13,6 +14,7 @@ services:
       - --certificatesresolvers.myresolver.acme.email=${EMAIL}
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
     ports:
+      - "80:80"
       - "443:443"
       - "25565:25565"
     volumes:
