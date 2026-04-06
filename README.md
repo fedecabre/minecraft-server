@@ -1,152 +1,207 @@
-# Secure Minecraft Server with Traefik and Velocity
+# Secure Minecraft Server with Traefik and DuckDNS
 
-This repository contains a Docker-based Minecraft server setup that uses Traefik as a reverse proxy with TLS termination and Velocity as a proxy for the Minecraft protocol.
+This repository contains a Docker-based Minecraft server setup that uses Traefik as a reverse proxy with TLS termination via Let's Encrypt and DuckDNS for free dynamic DNS hosting.
 
 ## Features
 
-- **TLS Encryption** - Secure connections using Let's Encrypt certificates
-- **Proxy Architecture** - Velocity proxy for improved security and performance
-- **Modern Forwarding** - Secure player authentication and information forwarding
+- **TLS Encryption** - Automatic HTTPS certificates from Let's Encrypt
+- **Traefik Reverse Proxy** - Professional-grade reverse proxy and load balancer
+- **DuckDNS Integration** - Free dynamic DNS with automatic IP updates
+- **Paper Server** - Modern Minecraft server (1.21.11) with optimization
 - **Docker Containerization** - Easy deployment and management
-- **Traefik Dashboard** - Web interface for monitoring and managing routes (optional)
+- **Health Checks** - Automated service monitoring and restart
+- **Resource Limits** - Controlled CPU and memory allocation
+- **Backup System** - Automated world data backups with retention
 
 ## Requirements
 
-- Docker and Docker Compose
-- A domain name (for production setup with TLS)
-- Open ports 443 and 25565 on your firewall/router
-- 4GB+ of RAM recommended
+- Docker and Docker Compose installed
+- Free DuckDNS account (or your own domain)
+- Port 443 (HTTPS) open on firewall/router
+- Port 25565 (Minecraft) open on firewall/router (optional, can go through Traefik)
+- 4GB+ RAM recommended
+- Linux or WSL2 environment
 
-## Quick Start
+## Quick Setup
 
-### Local Testing
-
-For local testing without TLS certificates:
-
-1. Clone this repository
-2. Create a `.env` file from `.env.example` (see below)
-3. Run the local setup:
+### 1. Clone and Configure
 
 ```bash
-docker-compose -f docker-compose.local.yml up -d
-```
-
-Connect to the server at `localhost:25565` or your local IP address.
-
-### Production Deployment
-
-For a full production setup with TLS:
-
-1. Clone this repository
-2. Create a `.env` file from `.env.example`
-3. Configure DNS records for your domain:
-   - `minecraft.yourdomain.com` → Your server IP
-   - `traefik.yourdomain.com` → Your server IP (for dashboard)
-4. Run the production setup:
-
-```bash
-docker-compose up -d
-```
-
-Connect to the server at `minecraft.yourdomain.com`.
-
-## Configuration
-
-### Environment Variables
-
-Copy the example environment file to create your own configuration:
-
-```bash
+git clone https://github.com/fedecabre/minecraft-server.git
+cd minecraft-server
 cp .env.example .env
 ```
 
-Then edit the `.env` file with your settings:
+### 2. Set Up Free DuckDNS Domain
 
-```
-# Domain and hostname configuration
-DOMAIN=yourdomain.com
-MINECRAFT_HOST=minecraft
-TRAEFIK_HOST=traefik
+1. Visit [duckdns.org](https://www.duckdns.org/)
+2. Login with Google/GitHub/Twitter
+3. Create subdomain (e.g., `myserver`)
+4. Get your token from the dashboard
 
-# Email for Let's Encrypt notifications
+### 3. Update Configuration
+
+Edit `.env` file:
+
+```bash
+DOMAIN_ROOT=duckdns.org
+DOMAIN_TRAEFIK=myserver.duckdns.org
+DOMAIN_MINECRAFT=myserver.duckdns.org
 EMAIL=your-email@example.com
-
-# Security - generate with: openssl rand -hex 16
-VELOCITY_FORWARDING_SECRET=your_random_secret
-
-# Minecraft server settings
-MC_MEMORY=4G
-MC_VERSION=LATEST
-MC_SERVER_NAME="My Minecraft Server"
+MCADMIN_PASS=your_secure_password
+CRAFTY_PASS=your_secure_password
 ```
 
-## Backup Strategy
+### 4. Launch Server
 
-Automated backups are crucial for Minecraft servers. This setup includes a backup script that creates compressed archives of your world data.
+```bash
+docker compose up -d
+```
 
-### Running Manual Backups
+### 5. Verify Setup
 
-Execute the backup script manually:
+```bash
+docker compose logs minecraft     # Check Minecraft startup
+docker compose ps                 # Verify containers running
+```
+
+Connect to server at `myserver.duckdns.org:25565`
+
+## Port Forwarding
+
+Forward these ports on your router to your machine:
+- **443** → 443 (HTTPS/Traefik)
+- **25565** → 25565 (Minecraft)
+
+## Backup & Recovery
+
+### Manual Backup
 
 ```bash
 ./backup.sh
 ```
 
-This will create a timestamped backup in `./docker/backups/` and keep the 7 most recent backups.
+Creates compressed backup in `./docker/backups/`
 
-### Automated Backups
-
-To set up daily automated backups, add a cron job:
+### Automated Backups (Linux/WSL)
 
 ```bash
-# Edit crontab
 crontab -e
-
-# Add this line for daily backups at 2 AM
-0 2 * * * cd /path/to/minecraft-server && ./backup.sh
+# Add: 0 2 * * * cd /path/to/minecraft-server && ./backup.sh
 ```
 
-### Backup Contents
+Daily backup at 2 AM, keeps last 7 backups.
 
-The backup includes:
-- `world` - Overworld data
-- `world_nether` - Nether dimension
-- `world_the_end` - End dimension
+## Configuration Files
 
-Backups are stored as compressed tar.gz files to save space.
+### `.env` (❌ Never commit!)
+**IMPORTANT**: This file contains passwords and secrets. Keep it private!
+- Already in `.gitignore`
+- Never push to public repositories
+- Rotate credentials if exposed
 
-### Security
+### `.env.example`
+Template showing required variables. Safe to commit and share.
 
-For additional security:
+### `compose.yml`
+Main Docker Compose configuration with Traefik, Minecraft, and resource limits.
 
-1. Enable Traefik Dashboard auth by uncommenting the auth middleware lines in `docker-compose.yml`
-2. Generate credentials using: `htpasswd -nb username password` and add to `.env`
+## Troubleshooting
+
+### Certificate Issues
+- Ensure DNS A record resolves to your public IP
+- Check router port forwarding (443 must be accessible)
+- Wait 5 minutes for DNS propagation
+
+```bash
+nslookup myserver.duckdns.org
+```
+
+### Connection Issues
+```bash
+# Test port accessibility
+nc -zv myserver.duckdns.org 25565
+
+# Check Docker logs
+docker compose logs traefik     # Proxy logs
+docker compose logs minecraft    # Server logs
+```
+
+### Update IP (if dynamic)
+DuckDNS auto-updates your IP, but you can force it:
+```bash
+curl "https://www.duckdns.org/update?domains=myserver&token=YOUR_TOKEN&ip="
+```
+
+## Security Best Practices
+
+1. **Never commit `.env`** - it contains passwords
+2. **Strong passwords** - Use random generation:
+   ```bash
+   openssl rand -base64 12
+   ```
+3. **Rotate credentials** - Especially if accidentally exposed
+4. **Firewall** - Only expose necessary ports
+5. **Updates** - Keep Docker images updated:
+   ```bash
+   docker compose pull
+   docker compose up -d
+   ```
 
 ## Directory Structure
 
 ```
 minecraft-server/
-├── docker-compose.yml         # Production configuration
-├── docker-compose.local.yml   # Local testing configuration
-├── .env                       # Environment variables (create from example)
-├── .env.example               # Example environment file
-├── minecraft-data/            # Minecraft server data
-├── traefik/                   # Traefik configuration
-│   ├── letsencrypt/           # Let's Encrypt certificates
-│   └── logs/                  # Traefik logs
-└── velocity/                  # Velocity proxy configuration
-    ├── velocity.toml          # Velocity settings
-    └── forwarding.secret      # Velocity authentication secret
+├── compose.yml                 # Production configuration
+├── .env                        # ❌ Private credentials (gitignored)
+├── .env.example                # ✓ Template (safe to share)
+├── .gitignore                  # Prevents .env from being committed
+├── backup.sh                   # Backup automation script
+├── minecraft-data/             # World data & server files
+├── docker/                     # Docker container configs
+│   ├── backups/               # Backup archives
+│   ├── config/                # Crafty controller config
+│   └── logs/                  # Service logs
+└── velocity-config/            # Velocity proxy config (optional)
 ```
 
-## Troubleshooting
+## Minecraft Server Details
 
-### Common Issues
+- **Version**: 1.21.11 (Paper - production optimized)
+- **Memory**: 4GB allocated
+- **Plugins**: bStats, Spark profiler built-in
+- **Port**: 25565 (proxied through Traefik)
+- **World Location**: `minecraft-data/world/`
 
-- **Connection Refused**: Check that ports 25565 and 443 are open on your firewall/router
-- **Invalid Certificate**: Ensure your DNS records are correctly pointing to your server's IP
-- **Velocity Errors**: Check logs with `docker-compose logs velocity`
-- **Minecraft Errors**: Check logs with `docker-compose logs minecraft`
+## DuckDNS Auto-Update (Optional)
+
+Keep IP current automatically:
+
+```bash
+# Create update script
+cat > update-duckdns.sh << 'EOF'
+#!/bin/bash
+TOKEN="your_duckdns_token"
+DOMAIN="myserver"
+curl "https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ip="
+EOF
+
+chmod +x update-duckdns.sh
+
+# Add to crontab for hourly updates
+crontab -e
+# Add: 0 * * * * /path/to/update-duckdns.sh
+```
+
+## License
+
+This project is provided as-is. See LICENSE file for details.
+
+## Support
+
+- Check logs: `docker compose logs`
+- View config: `cat .env.example`
+- Restart services: `docker compose down && docker compose up -d`
 
 ### Checking Server Status
 
