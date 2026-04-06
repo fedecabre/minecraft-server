@@ -19,12 +19,41 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`${DOMAIN_TRAEFIK}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=myresolver"
       - "traefik.http.routers.traefik.service=api@internal"
+
+  velocity:
+    image: itzg/velocity:latest
+    container_name: velocity
+    environment:
+      VELOCITY_FORWARDING_SECRET: "${VELOCITY_FORWARDING_SECRET}"
+      VELOCITY_BACKEND_HOST: "minecraft"
+      VELOCITY_BACKEND_PORT: "25566"
+    volumes:
+      - ./minecraft-data/velocity:/config
+    restart: unless-stopped
+    depends_on:
+      - minecraft
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.velocity.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.velocity.entrypoints=minecraft"
+      - "traefik.tcp.routers.velocity.service=velocity"
+      - "traefik.tcp.services.velocity.loadbalancer.server.port=25565"
 
   minecraft:
     image: itzg/minecraft-server
@@ -36,6 +65,7 @@ services:
       ONLINE_MODE: "TRUE"
       SERVER_NAME: "${MCADMIN_SERVER_NAME}"
       TYPE: "PAPER"
+      PORT: "25566"
     volumes:
       - ./minecraft-data:/data
     restart: unless-stopped
@@ -44,10 +74,9 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.tcp.routers.minecraft.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.minecraft.entrypoints=minecraft"
-      - "traefik.tcp.routers.minecraft.service=minecraft"
-      - "traefik.tcp.services.minecraft.loadbalancer.server.port=25565"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
 
