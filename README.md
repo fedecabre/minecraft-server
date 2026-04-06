@@ -70,25 +70,25 @@ Connect to server at `myserver.duckdns.org:16384`
 
 ## Port Forwarding
 
-Port forwarding is **REQUIRED** for Minecraft traffic. With DuckDNS DNS challenge, Let's Encrypt validation no longer requires external port 80 or 443.
+Port forwarding is **REQUIRED** for Minecraft traffic. With DuckDNS DNS challenge, Let's Encrypt validation does not require external port 80 or 443.
 
 Forward this port on your router to your machine:
 - **16384** → `25565` (Minecraft game server) for Freebox users with high-port restrictions
 
-If you want external HTTPS web services behind Traefik, forward another allowed external port to the host port where that service is exposed.
+If you want external HTTPS web services behind Traefik, select another allowed external port and map it to the host port where that service is exposed.
 
 ### For Freebox Users (France)
 
 1. **Access Freebox Admin Panel**
    - Open browser: `http://192.168.1.254/` or `mafreebox.free.fr`
-   - Login: username `freebox`, password on back of router
+   - Login: username `freebox`, password on the back of the router
 
 2. **Navigate to Port Forwarding**
    - Go to **Paramètres** → **Réseau** → **NAT/UPnP** or **Redirection de ports**
 
 3. **Add the Minecraft Port Forwarding Rule**
    - External Port: `16384`
-   - Internal IP: `<your-machine-ip>` (e.g., `192.168.1.4`)
+   - Internal IP: `<your-machine-ip>` (e.g. `192.168.1.4`)
    - Internal Port: `25565`
    - Protocol: TCP
 
@@ -98,13 +98,11 @@ If you want external HTTPS web services behind Traefik, forward another allowed 
 
 5. **Verify Port Forwarding**
    ```bash
-   nslookup fedecabre.duckdns.org
+   nslookup myserver.duckdns.org
    
    docker compose down
    docker compose up -d
    
-   docker compose logs traefik | grep -i "acme\|certificate"
-   ```
    docker compose logs traefik | grep -i "acme\|certificate"
    ```
 
@@ -144,30 +142,30 @@ Main Docker Compose configuration with Traefik, Minecraft, and resource limits.
 ## Troubleshooting
 
 ### Certificate Issues (ACME)
-- **Port 80 must be accessible** - Let's Encrypt needs HTTP for validation
-- **Port 443 must be accessible** - For HTTPS service
-- Ensure router port forwarding is properly configured (see "Port Forwarding" section)
-- Check DNS A record resolves to your public IP
-- Wait 5 minutes for DNS propagation
+- Confirm `DUCKDNS_TOKEN` is set in `.env`
+- Make sure `myserver.duckdns.org` resolves to your public IP
+- Port 80 and 443 are not required for DNS-01 validation
+- Ensure Traefik can write to `/letsencrypt/acme.json`
+- Wait 5 minutes for DNS updates and Traefik propagation
 
 ```bash
 # Test DNS resolution
-nslookup fedecabre.duckdns.org
+nslookup myserver.duckdns.org
 
 # Check certificate acquisition in logs
 docker compose logs traefik | grep -i "acme\|certificate"
 
-# If still failing, restart services after port forwarding configured
+# Restart services if needed
 docker compose down
 docker compose up -d
 ```
 
-Error: `Timeout during connect (likely firewall problem)` = Port forwarding not working
+If the certificate is still not issued, verify the DuckDNS token and DNS challenge setup.
 
 ### Connection Issues
 ```bash
 # Test port accessibility
-nc -zv myserver.duckdns.org 25565
+nc -zv myserver.duckdns.org 16384
 
 # Check Docker logs
 docker compose logs traefik     # Proxy logs
@@ -240,10 +238,6 @@ crontab -e
 # Add: 0 * * * * /path/to/update-duckdns.sh
 ```
 
-## License
-
-This project is provided as-is. See LICENSE file for details.
-
 ## Support
 
 - Check logs: `docker compose logs`
@@ -256,13 +250,13 @@ To verify the server is running correctly:
 
 ```bash
 # Check container status
-docker-compose ps
+docker compose ps
 
 # Test port connectivity
 nc -zv localhost 25565
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ## License
