@@ -17,7 +17,8 @@ This repository contains a Docker-based Minecraft server setup that uses Traefik
 
 - Docker and Docker Compose installed
 - Free DuckDNS account (or your own domain)
-- **Port forwarding configured on router** (80, 443, 25565)
+- DuckDNS token for DNS-01 challenge
+- **Port forwarding configured on router** for Minecraft (high ports on Freebox)
 - 4GB+ RAM recommended
 - Linux or WSL2 environment
 
@@ -47,6 +48,7 @@ DOMAIN_ROOT=duckdns.org
 DOMAIN_TRAEFIK=myserver.duckdns.org
 DOMAIN_MINECRAFT=myserver.duckdns.org
 EMAIL=your-email@example.com
+DUCKDNS_TOKEN=your_duckdns_token_here
 MCADMIN_PASS=your_secure_password
 CRAFTY_PASS=your_secure_password
 ```
@@ -64,16 +66,16 @@ docker compose logs minecraft     # Check Minecraft startup
 docker compose ps                 # Verify containers running
 ```
 
-Connect to server at `myserver.duckdns.org:25565`
+Connect to server at `myserver.duckdns.org:16384`
 
 ## Port Forwarding
 
-Port forwarding is **REQUIRED** for Let's Encrypt to validate your domain and issue SSL certificates.
+Port forwarding is **REQUIRED** for Minecraft traffic. With DuckDNS DNS challenge, Let's Encrypt validation no longer requires external port 80 or 443.
 
-Forward these ports on your router to your machine:
-- **80** → 80 (HTTP - required for Let's Encrypt ACME validation)
-- **443** → 443 (HTTPS/Traefik)
-- **25565** → 25565 (Minecraft game server)
+Forward this port on your router to your machine:
+- **16384** → `25565` (Minecraft game server) for Freebox users with high-port restrictions
+
+If you want external HTTPS web services behind Traefik, forward another allowed external port to the host port where that service is exposed.
 
 ### For Freebox Users (France)
 
@@ -84,23 +86,9 @@ Forward these ports on your router to your machine:
 2. **Navigate to Port Forwarding**
    - Go to **Paramètres** → **Réseau** → **NAT/UPnP** or **Redirection de ports**
 
-3. **Add Three Port Forwarding Rules**
-   
-   **Rule 1 - HTTP (Let's Encrypt):**
-   - External Port: `80`
-   - Internal IP: `<your-machine-ip>` (e.g., 192.168.1.100 or your WAN IP)
-   - Internal Port: `80`
-   - Protocol: TCP
-   
-   **Rule 2 - HTTPS:**
-   - External Port: `443`
-   - Internal IP: `<your-machine-ip>`
-   - Internal Port: `443`
-   - Protocol: TCP
-   
-   **Rule 3 - Minecraft:**
-   - External Port: `25565`
-   - Internal IP: `<your-machine-ip>`
+3. **Add the Minecraft Port Forwarding Rule**
+   - External Port: `16384`
+   - Internal IP: `<your-machine-ip>` (e.g., `192.168.1.4`)
    - Internal Port: `25565`
    - Protocol: TCP
 
@@ -110,14 +98,13 @@ Forward these ports on your router to your machine:
 
 5. **Verify Port Forwarding**
    ```bash
-   # Check if ports are accessible (give it a few minutes)
    nslookup fedecabre.duckdns.org
    
-   # Restart Docker services
    docker compose down
    docker compose up -d
    
-   # Check Traefik logs for certificate acquisition
+   docker compose logs traefik | grep -i "acme\|certificate"
+   ```
    docker compose logs traefik | grep -i "acme\|certificate"
    ```
 
