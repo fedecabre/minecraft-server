@@ -14,6 +14,12 @@ docker/logs/
 minecraft-data/cache/
 docker/import/upload/
 
+# Runtime server files created by the Minecraft Docker image
+minecraft-data/.paper.env
+minecraft-data/.papermc-manifest.json
+minecraft-data/.rcon-cli.env
+minecraft-data/.rcon-cli.yaml
+
 # Backups
 docker/backups/
 
