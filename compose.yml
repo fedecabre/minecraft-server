@@ -7,7 +7,7 @@ services:
     command:
       - --entrypoints.web.address=:80
       - --entrypoints.minecraft.address=:25565
-      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.address=:16400
       - --providers.docker=true
       - --api.dashboard=true
       - --certificatesresolvers.myresolver.acme.tlschallenge=true
@@ -15,7 +15,7 @@ services:
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
     ports:
       - "80:80"
-      - "443:443"
+      - "16400:16400"
       - "25565:25565"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
