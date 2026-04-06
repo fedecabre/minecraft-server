@@ -10,7 +10,7 @@ services:
       - --providers.docker=true
       - --api.dashboard=true
       - --certificatesresolvers.myresolver.acme.tlschallenge=true
-      - --certificatesresolvers.myresolver.acme.email=${EMAIL_TLS}
+      - --certificatesresolvers.myresolver.acme.email=${EMAIL}
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
     ports:
       - "443:443"
@@ -39,6 +39,11 @@ services:
     volumes:
       - ./minecraft-data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.minecraft.rule=HostSNI(`*`)"
