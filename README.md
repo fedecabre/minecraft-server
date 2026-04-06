@@ -80,6 +80,41 @@ MC_VERSION=LATEST
 MC_SERVER_NAME="My Minecraft Server"
 ```
 
+## Backup Strategy
+
+Automated backups are crucial for Minecraft servers. This setup includes a backup script that creates compressed archives of your world data.
+
+### Running Manual Backups
+
+Execute the backup script manually:
+
+```bash
+./backup.sh
+```
+
+This will create a timestamped backup in `./docker/backups/` and keep the 7 most recent backups.
+
+### Automated Backups
+
+To set up daily automated backups, add a cron job:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line for daily backups at 2 AM
+0 2 * * * cd /path/to/minecraft-server && ./backup.sh
+```
+
+### Backup Contents
+
+The backup includes:
+- `world` - Overworld data
+- `world_nether` - Nether dimension
+- `world_the_end` - End dimension
+
+Backups are stored as compressed tar.gz files to save space.
+
 ### Security
 
 For additional security:
