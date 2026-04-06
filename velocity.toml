@@ -1,0 +1,17 @@
+# Velocity Configuration
+# Generated for Docker setup
+
+[servers]
+lobby = "minecraft:25566"
+
+[forced-hosts]
+"minecraft.fedecabre.com" = ["lobby"]
+
+[advanced]
+force-key-authentication = true
+forwarding-secret = "583ac1941f4779405f43848c70010d0f"
+
+[query]
+enabled = true
+port = 25565
+show-plugins = false
