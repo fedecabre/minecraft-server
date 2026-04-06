@@ -32,14 +32,13 @@ services:
       - "traefik.http.routers.traefik.service=api@internal"
 
   velocity:
-    image: itzg/velocity:latest
+    image: endkind/velocity:latest
     container_name: velocity
     environment:
-      VELOCITY_FORWARDING_SECRET: "${VELOCITY_FORWARDING_SECRET}"
-      VELOCITY_BACKEND_HOST: "minecraft"
-      VELOCITY_BACKEND_PORT: "25566"
+      MIN_RAM: "128M"
+      MAX_RAM: "256M"
     volumes:
-      - ./minecraft-data/velocity:/config
+      - ./velocity.toml:/data/velocity.toml
     restart: unless-stopped
     depends_on:
       - minecraft
