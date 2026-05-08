@@ -1,6 +1,9 @@
 # Environment variables
 .env
 
+# Ignore the entire Minecraft runtime directory
+minecraft-data/
+
 # Minecraft world data
 minecraft-data/world/
 minecraft-data/world_nether/
