@@ -12,6 +12,7 @@ This repository is a Dockerized Minecraft server setup with Traefik and DuckDNS.
 - `letsencrypt/acme.json` is ACME state and should not be committed.
 
 ## Guidance for Copilot
+- **Use caveman mode by default** — Keep responses terse and technical (~75% fewer tokens). No fluff, just answers.
 - Prefer updating documentation, `.env.example`, and `compose.yml` when changes are needed.
 - Avoid modifying generated runtime files under `minecraft-data/` unless the user explicitly asks for cleanup.
 - Use `docker compose` commands in docs and instructions, not `docker-compose`.
