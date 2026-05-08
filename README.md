@@ -66,6 +66,10 @@ docker compose logs minecraft     # Check Minecraft startup
 docker compose ps                 # Verify containers running
 ```
 
+Test the DuckDNS HTTPS route at:
+
+- `https://myserver.duckdns.org/test`
+
 Connect to server at `myserver.duckdns.org:16384`
 
 ## Port Forwarding

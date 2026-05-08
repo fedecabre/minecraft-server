@@ -18,6 +18,7 @@ services:
       - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
     ports:
       - "80:80"
+      - "443:16400"
       - "16400:16400"
       - "25565:25565"
     volumes:
@@ -65,4 +66,17 @@ services:
       - "traefik.tcp.routers.minecraft.entrypoints=minecraft"
       - "traefik.tcp.routers.minecraft.service=minecraft"
       - "traefik.tcp.services.minecraft.loadbalancer.server.port=25565"
+
+  duckdns-test:
+    image: nginx:alpine
+    container_name: duckdns-test
+    volumes:
+      - ./docker/test-site:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.duckdns-test.rule=Host(`${DOMAIN_TRAEFIK}`) && PathPrefix(`/test`)"
+      - "traefik.http.routers.duckdns-test.entrypoints=websecure"
+      - "traefik.http.routers.duckdns-test.tls.certresolver=myresolver"
+      - "traefik.http.services.duckdns-test.loadbalancer.server.port=80"
 
