@@ -71,6 +71,10 @@ Test the DuckDNS route at:
 - `https://myserver.duckdns.org:49153/test`
 - `http://myserver.duckdns.org:49152/test`
 
+Check the public Minecraft status page for the server:
+
+- `https://mcsrvstat.us/server/myserver.duckdns.org:49154`
+
 > If your Freebox blocks low ports, external standard HTTPS on `443` will not work. Use a high external port mapped to internal `80` or `16400` instead.
 
 Connect to server at `myserver.duckdns.org:49154`
@@ -259,6 +263,8 @@ crontab -e
 # Add: 0 * * * * /path/to/update-duckdns.sh
 ```
 
+> **Note**: The `./verify-server.sh` script also automatically checks and updates your DuckDNS IP when run, making manual scripts less necessary.
+
 ## Support
 
 - Check logs: `docker compose logs`
@@ -268,6 +274,16 @@ crontab -e
 ### Checking Server Status
 
 To verify the server is running correctly:
+
+```bash
+# Optional: make the helper executable once
+chmod +x ./verify-server.sh
+
+# Run the verification test (includes automatic DuckDNS IP check)
+./verify-server.sh
+```
+
+If you want to inspect individual services manually:
 
 ```bash
 # Check container status

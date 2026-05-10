@@ -137,6 +137,16 @@ Confirm the DuckDNS hostname resolves:
 nslookup fedecabre.duckdns.org
 ```
 
+### Automatic IP synchronization
+
+The `verify-server.sh` script automatically checks if your public IP matches the DuckDNS record and updates it if necessary:
+
+```bash
+./verify-server.sh
+```
+
+This requires `DUCKDNS_TOKEN` to be set in `.env`.
+
 ### External port verification
 
 If the Freebox forwarding is configured correctly:
@@ -144,6 +154,12 @@ If the Freebox forwarding is configured correctly:
 ```bash
 curl -I -m 10 http://fedecabre.duckdns.org:49152/test
 curl -I -m 10 https://fedecabre.duckdns.org:49153/test
+```
+
+For Minecraft-specific status, verify the server with mcsrvstat:
+
+```bash
+curl -I -m 10 https://mcsrvstat.us/server/fedecabre.duckdns.org:49154
 ```
 
 ### Minecraft access
