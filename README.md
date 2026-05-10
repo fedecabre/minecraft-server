@@ -66,11 +66,16 @@ docker compose logs minecraft     # Check Minecraft startup
 docker compose ps                 # Verify containers running
 ```
 
-Test the DuckDNS HTTPS route at:
+Test the DuckDNS route at:
 
-- `https://myserver.duckdns.org/test`
+- `https://myserver.duckdns.org:49153/test`
+- `http://myserver.duckdns.org:49152/test`
 
-Connect to server at `myserver.duckdns.org:16384`
+> If your Freebox blocks low ports, external standard HTTPS on `443` will not work. Use a high external port mapped to internal `80` or `16400` instead.
+
+Connect to server at `myserver.duckdns.org:49154`
+
+> This was verified as working through Freebox port forwarding to internal port `25565`.
 
 ## Port Forwarding
 
@@ -90,9 +95,21 @@ If you want external HTTPS web services behind Traefik, select another allowed e
 2. **Navigate to Port Forwarding**
    - Go to **Paramètres** → **Réseau** → **NAT/UPnP** or **Redirection de ports**
 
-3. **Add the Minecraft Port Forwarding Rule**
-   - External Port: `16384`
+3. **Add the HTTP and optional HTTPS Port Forwarding Rules**
+   - External Port: `49152`
    - Internal IP: `<your-machine-ip>` (e.g. `192.168.1.4`)
+   - Internal Port: `80`
+   - Protocol: TCP
+
+   Optional HTTPS mapping:
+   - External Port: `49153`
+   - Internal IP: `<your-machine-ip>`
+   - Internal Port: `16400`
+   - Protocol: TCP
+
+4. **Add the Minecraft Port Forwarding Rule**
+   - External Port: `16384` (or another allowed high port)
+   - Internal IP: `<your-machine-ip>`
    - Internal Port: `25565`
    - Protocol: TCP
 
@@ -177,9 +194,9 @@ docker compose logs minecraft    # Server logs
 ```
 
 ### Update IP (if dynamic)
-DuckDNS auto-updates your IP, but you can force it:
+DuckDNS auto-updates your IP, but you can force it when your public IPv4 changes:
 ```bash
-curl "https://www.duckdns.org/update?domains=myserver&token=YOUR_TOKEN&ip="
+curl "https://www.duckdns.org/update?domains=fedecabre&token=YOUR_TOKEN&ip="
 ```
 
 ## Security Best Practices

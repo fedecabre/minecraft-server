@@ -1,0 +1,187 @@
+# Implementation Documentation
+
+## Overview
+
+This repository implements a Docker-based Minecraft server with Traefik reverse proxy and DuckDNS DNS-01 ACME certificate issuance.
+
+The stack is designed for a home network with a Freebox router that blocks low external ports, so it uses high external ports for public access where required.
+
+## Architecture
+
+- `traefik`: reverse proxy, ACME TLS, HTTP/HTTPS ingress, TCP proxy for Minecraft
+- `minecraft`: Paper Minecraft server running on internal port `25565`
+- `duckdns-test`: nginx static page used to verify DNS and HTTP routing
+
+## Key Components
+
+### Traefik
+
+Traefik is configured in `compose.yml` with these entrypoints:
+
+- `web` → `:80`
+- `websecure` → `:16400`
+- `minecraft` → `:25565`
+
+Traefik also uses DuckDNS for the DNS-01 challenge:
+
+- `--certificatesresolvers.myresolver.acme.dnschallenge.provider=duckdns`
+- `--certificatesresolvers.myresolver.acme.email=${EMAIL}`
+- `--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json`
+
+### Minecraft service
+
+The Minecraft container runs:
+
+- internal port `25565`
+- Traefik TCP router on entrypoint `minecraft`
+- host port `25565` published for LAN access
+
+### DuckDNS test page
+
+A simple Nginx service serves `/test` from `./docker/test-site`.
+Its Traefik router matches:
+
+- `Host(`${DOMAIN_TRAEFIK}`) && PathPrefix(`/test`)`
+
+The middleware strips `/test` before forwarding to the nginx container.
+
+## Environment variables
+
+Store secrets in `.env` and do not commit it.
+
+Required variables:
+
+- `DOMAIN_ROOT=duckdns.org`
+- `DOMAIN_TRAEFIK=fedecabre.duckdns.org`
+- `EMAIL=your-email@example.com`
+- `DUCKDNS_TOKEN=your-duckdns-token`
+- `MCADMIN_SERVER_NAME` and other optional server values
+
+## Ports and routing
+
+### Container host ports
+
+`compose.yml` maps:
+
+- `80:80` for HTTP to Traefik
+- `443:16400` to Traefik `websecure`
+- `16400:16400` as an alternate HTTPS port inside the stack
+- `25565:25565` for Minecraft TCP
+
+### Freebox limitations
+
+Freebox restricts external port forwarding below `49152` in this setup. That means:
+
+- You cannot use external `80` or `443` if the router blocks low ports
+- You must use high external ports instead
+
+Recommended public mappings for Freebox:
+
+- `WAN 49152` → `LAN 80` (HTTP)
+- `WAN 49153` → `LAN 16400` (HTTPS for Traefik websecure)
+- `WAN 49154` → `LAN 25565` (Minecraft)
+
+If you need to access the test page externally, use:
+
+- `https://fedecabre.duckdns.org:49153/test`
+
+If HTTP forwarding is also configured, this will work as well:
+
+- `http://fedecabre.duckdns.org:49152/test`
+
+The HTTPS route uses the same DuckDNS hostname, but a non-standard port because Freebox blocks low ports.
+
+## Deployment steps
+
+1. Copy the example env file:
+
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` with your DuckDNS token, domain, and email.
+
+3. Start the stack:
+
+```bash
+docker compose up -d
+```
+
+4. Confirm containers are running:
+
+```bash
+docker compose ps
+```
+
+5. Check Traefik logs for ACME activity:
+
+```bash
+docker compose logs traefik | grep -i "acme\|certificate"
+```
+
+## Verification
+
+### Local verification
+
+From the host:
+
+```bash
+curl -s -H "Host: fedecabre.duckdns.org" http://localhost:80/test | head -20
+```
+
+### DNS verification
+
+Confirm the DuckDNS hostname resolves:
+
+```bash
+nslookup fedecabre.duckdns.org
+```
+
+### External port verification
+
+If the Freebox forwarding is configured correctly:
+
+```bash
+curl -I -m 10 http://fedecabre.duckdns.org:49152/test
+curl -I -m 10 https://fedecabre.duckdns.org:49153/test
+```
+
+### Minecraft access
+
+If the router forwards external `49154` to internal `25565`, connect with:
+
+```text
+fedecabre.duckdns.org:49154
+```
+
+> This has been tested and confirmed reachable from the public internet.
+
+## Notes
+
+- DuckDNS DNS-01 ACME means Let’s Encrypt certificate issuance does not require public `80` or `443`.
+- However, standard browser access still needs port forwarding if you want `https://fedecabre.duckdns.org/test` without a port.
+- If Freebox blocks standard ports, use high external ports and include them in the URL.
+
+## Troubleshooting
+
+1. If the test page returns `404` locally, check Traefik router labels and middleware.
+2. If external access times out, verify Freebox port forwarding rules and public IP.
+3. If your public IP is dynamic, refresh DuckDNS after the IP changes:
+   ```bash
+   curl "https://www.duckdns.org/update?domains=fedecabre&token=YOUR_TOKEN&ip="
+   ```
+4. If certificates fail, verify `DUCKDNS_TOKEN` and whether Traefik can write `/letsencrypt/acme.json`.
+
+## Directory structure
+
+```text
+minecraft-server/
+├── compose.yml
+├── .env
+├── .env.example
+├── IMPLEMENTATION.md
+├── docker/test-site/
+│   └── index.html
+├── minecraft-data/
+└── letsencrypt/
+```
