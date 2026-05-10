@@ -80,4 +80,9 @@ services:
       - "traefik.http.routers.duckdns-test.middlewares=duckdns-test-strip"
       - "traefik.http.services.duckdns-test.loadbalancer.server.port=80"
       - "traefik.http.middlewares.duckdns-test-strip.stripprefix.prefixes=/test"
+      - "traefik.http.routers.duckdns-test-secure.rule=Host(`${DOMAIN_TRAEFIK}`) && PathPrefix(`/test`)"
+      - "traefik.http.routers.duckdns-test-secure.entrypoints=websecure"
+      - "traefik.http.routers.duckdns-test-secure.tls.certresolver=myresolver"
+      - "traefik.http.routers.duckdns-test-secure.middlewares=duckdns-test-strip"
+      - "traefik.http.routers.duckdns-test-secure.service=duckdns-test"
 
