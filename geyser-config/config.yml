@@ -9,19 +9,16 @@ bedrock:
   motd2: "Bedrock Edition"
 
 remote:
-  # Java server details
+  # Java server details - connect to the minecraft service in Docker network
   address: minecraft
   port: 25565
   auth-type: online
   allow-password-authentication: false
 
-# Floodgate is not required for basic functionality
 floodgate:
   enabled: false
 
-# Debug mode
 debug: false
 
-# Metrics collection (optional)
 metrics:
   enabled: true

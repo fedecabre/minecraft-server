@@ -57,20 +57,19 @@ else
   echo "Skipping DuckDNS check (DUCKDNS_TOKEN not set)"
 fi
 
-echo
-== Docker status ==
+echo "== Docker status =="
 docker compose ps
 
-echo
-== Minecraft container health ==
+echo ""
+echo "== Minecraft container health =="
 if docker compose ps | grep -q minecraft; then
   docker compose exec -T minecraft mc-health || echo "Warning: mc-health failed. Check container logs."
 else
   echo "Minecraft container is not running."
 fi
 
-echo
-== Local port check ==
+echo ""
+echo "== Local port check =="
 if command -v nc >/dev/null 2>&1; then
   nc -zv localhost 25565
 else
@@ -82,14 +81,14 @@ else
   fi
 fi
 
-echo
-== External HTTP test ==
+echo ""
+echo "== External HTTP test =="
 set +e
 curl -I -m 10 "http://${DOMAIN_TRAEFIK}:49152/test"
 curl -Ik -m 10 "https://${DOMAIN_TRAEFIK}:49153/test"
 
-echo
-== External Minecraft TCP test ==
+echo ""
+echo "== External Minecraft TCP test =="
 if command -v nc >/dev/null 2>&1; then
   nc -zv "${DOMAIN_MINECRAFT}" 49154
 else
@@ -102,5 +101,5 @@ else
 fi
 set -e
 
-echo
-Verification complete.
+echo ""
+echo "Verification complete."

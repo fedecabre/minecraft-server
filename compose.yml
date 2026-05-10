@@ -89,12 +89,10 @@ services:
       - "traefik.http.routers.duckdns-test-secure.service=duckdns-test"
 
   geyser:
-    image: geysermc/geyser:latest
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.geyser
     container_name: geyser
-    environment:
-      SERVER_IP: minecraft
-      SERVER_PORT: "25565"
-      BEDROCK_LEVEL_NAME: "${MCADMIN_SERVER_NAME}"
     volumes:
       - ./geyser-config:/geyser
     ports:
