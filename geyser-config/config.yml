@@ -1,0 +1,27 @@
+# Geyser Configuration
+# This file allows you to configure Geyser for translating Bedrock Edition clients to your Java server
+
+bedrock:
+  # Listen address and port for Bedrock clients
+  address: 0.0.0.0
+  port: 19132
+  motd1: "Minecraft Server"
+  motd2: "Bedrock Edition"
+
+remote:
+  # Java server details
+  address: minecraft
+  port: 25565
+  auth-type: online
+  allow-password-authentication: false
+
+# Floodgate is not required for basic functionality
+floodgate:
+  enabled: false
+
+# Debug mode
+debug: false
+
+# Metrics collection (optional)
+metrics:
+  enabled: true

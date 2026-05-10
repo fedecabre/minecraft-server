@@ -8,6 +8,7 @@ This repository contains a Docker-based Minecraft server setup that uses Traefik
 - **Traefik Reverse Proxy** - Professional-grade reverse proxy and load balancer
 - **DuckDNS Integration** - Free dynamic DNS with automatic IP updates
 - **Paper Server** - Modern Minecraft server (1.21.11) with optimization
+- **Cross-Platform Support** - Geyser proxy for Bedrock Edition players
 - **Docker Containerization** - Easy deployment and management
 - **Health Checks** - Automated service monitoring and restart
 - **Resource Limits** - Controlled CPU and memory allocation
@@ -81,14 +82,20 @@ Connect to server at `myserver.duckdns.org:49154`
 
 > This was verified as working through Freebox port forwarding to internal port `25565`.
 
+### Bedrock Edition Support
+
+Bedrock players can connect to the same world using Geyser proxy translation:
+
+- **Address**: `myserver.duckdns.org`
+- **Port**: `49155` (UDP)
+
+Geyser automatically translates Bedrock protocol to Java, allowing cross-platform play.
+
 ## Port Forwarding
 
 Port forwarding is **REQUIRED** for Minecraft traffic. With DuckDNS DNS challenge, Let's Encrypt validation does not require external port 80 or 443.
 
-Forward this port on your router to your machine:
-- **16384** → `25565` (Minecraft game server) for Freebox users with high-port restrictions
-
-If you want external HTTPS web services behind Traefik, select another allowed external port and map it to the host port where that service is exposed.
+### Required Port Mappings
 
 ### For Freebox Users (France)
 
@@ -111,17 +118,23 @@ If you want external HTTPS web services behind Traefik, select another allowed e
    - Internal Port: `16400`
    - Protocol: TCP
 
-4. **Add the Minecraft Port Forwarding Rule**
-   - External Port: `16384` (or another allowed high port)
+4. **Add the Java Minecraft Port Forwarding Rule**
+   - External Port: `49154`
    - Internal IP: `<your-machine-ip>`
    - Internal Port: `25565`
    - Protocol: TCP
 
-4. **Save and Wait**
+5. **Add the Bedrock Minecraft Port Forwarding Rule (UDP)**
+   - External Port: `49155`
+   - Internal IP: `<your-machine-ip>`
+   - Internal Port: `19132`
+   - Protocol: UDP
+
+6. **Save and Wait**
    - Click "Appliquer" (Apply)
    - Wait 1-2 minutes for changes to take effect
 
-5. **Verify Port Forwarding**
+7. **Verify Port Forwarding**
    ```bash
    nslookup myserver.duckdns.org
    

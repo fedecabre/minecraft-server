@@ -8,6 +8,7 @@ services:
       - --entrypoints.web.address=:80
       - --entrypoints.minecraft.address=:25565
       - --entrypoints.websecure.address=:16400
+      - --entrypoints.bedrock.address=:19132/udp
       - --providers.docker=true
       - --api.dashboard=true
       - --certificatesresolvers.myresolver.acme.dnschallenge.provider=duckdns
@@ -21,6 +22,7 @@ services:
       - "443:16400"
       - "16400:16400"
       - "25565:25565"
+      - "19132:19132/udp"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
@@ -85,4 +87,30 @@ services:
       - "traefik.http.routers.duckdns-test-secure.tls.certresolver=myresolver"
       - "traefik.http.routers.duckdns-test-secure.middlewares=duckdns-test-strip"
       - "traefik.http.routers.duckdns-test-secure.service=duckdns-test"
+
+  geyser:
+    image: geysermc/geyser:latest
+    container_name: geyser
+    environment:
+      SERVER_IP: minecraft
+      SERVER_PORT: "25565"
+      BEDROCK_LEVEL_NAME: "${MCADMIN_SERVER_NAME}"
+    volumes:
+      - ./geyser-config:/geyser
+    ports:
+      - "19132:19132/udp"
+      - "19133:19133/tcp"
+    restart: unless-stopped
+    depends_on:
+      - minecraft
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.udp.routers.geyser.entrypoints=bedrock"
+      - "traefik.udp.routers.geyser.service=geyser"
+      - "traefik.udp.services.geyser.loadbalancer.server.port=19132"
 

@@ -8,8 +8,9 @@ The stack is designed for a home network with a Freebox router that blocks low e
 
 ## Architecture
 
-- `traefik`: reverse proxy, ACME TLS, HTTP/HTTPS ingress, TCP proxy for Minecraft
-- `minecraft`: Paper Minecraft server running on internal port `25565`
+- `traefik`: reverse proxy, ACME TLS, HTTP/HTTPS ingress, TCP proxy for Minecraft, UDP proxy for Bedrock
+- `minecraft`: Paper Minecraft server running on internal port `25565` (Java Edition)
+- `geyser`: Geyser proxy translating Bedrock protocol to Java on port `19132` (Bedrock Edition)
 - `duckdns-test`: nginx static page used to verify DNS and HTTP routing
 
 ## Key Components
@@ -20,7 +21,8 @@ Traefik is configured in `compose.yml` with these entrypoints:
 
 - `web` → `:80`
 - `websecure` → `:16400`
-- `minecraft` → `:25565`
+- `minecraft` → `:25565` (TCP)
+- `bedrock` → `:19132` (UDP)
 
 Traefik also uses DuckDNS for the DNS-01 challenge:
 
@@ -35,6 +37,15 @@ The Minecraft container runs:
 - internal port `25565`
 - Traefik TCP router on entrypoint `minecraft`
 - host port `25565` published for LAN access
+
+### Geyser service
+
+Geyser translates Bedrock Edition clients to Java Edition protocol:
+
+- internal port `19132` (UDP) for Bedrock clients
+- connects to Java server at `minecraft:25565`
+- Traefik UDP router on entrypoint `bedrock`
+- Allows cross-platform play between Java and Bedrock editions
 
 ### DuckDNS test page
 
@@ -66,7 +77,8 @@ Required variables:
 - `80:80` for HTTP to Traefik
 - `443:16400` to Traefik `websecure`
 - `16400:16400` as an alternate HTTPS port inside the stack
-- `25565:25565` for Minecraft TCP
+- `25565:25565` for Minecraft TCP (Java)
+- `19132:19132/udp` for Bedrock UDP (Geyser)
 
 ### Freebox limitations
 
@@ -79,7 +91,8 @@ Recommended public mappings for Freebox:
 
 - `WAN 49152` → `LAN 80` (HTTP)
 - `WAN 49153` → `LAN 16400` (HTTPS for Traefik websecure)
-- `WAN 49154` → `LAN 25565` (Minecraft)
+- `WAN 49154` → `LAN 25565` (Java Minecraft TCP)
+- `WAN 49155` → `LAN 19132` (Bedrock Minecraft UDP)
 
 If you need to access the test page externally, use:
 
@@ -170,7 +183,15 @@ If the router forwards external `49154` to internal `25565`, connect with:
 fedecabre.duckdns.org:49154
 ```
 
-> This has been tested and confirmed reachable from the public internet.
+### Bedrock access
+
+If the router forwards external `49155` (UDP) to internal `19132`, Bedrock players connect with:
+
+```text
+fedecabre.duckdns.org:49155
+```
+
+> Both Java and Bedrock clients connect to the same world through Geyser translation.
 
 ## Notes
 
@@ -196,8 +217,12 @@ minecraft-server/
 ├── .env
 ├── .env.example
 ├── IMPLEMENTATION.md
+├── README.md
+├── verify-server.sh
 ├── docker/test-site/
 │   └── index.html
+├── geyser-config/
+│   └── config.yml
 ├── minecraft-data/
 └── letsencrypt/
 ```
