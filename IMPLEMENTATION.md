@@ -31,13 +31,36 @@ Traefik also uses DuckDNS for the DNS-01 challenge:
 
 ### Minecraft service
 
-The Minecraft container runs Paper server with built-in Geyser support:
+The Minecraft container runs Paper server (1.21.1-133) with Geyser and Floodgate plugins:
 
 - internal port `25565` (Java Edition)
-- internal port `19132` (Bedrock Edition via Geyser)
+- internal port `19132` (Bedrock Edition via Geyser UDP)
 - Traefik TCP router on entrypoint `minecraft` for Java clients
-- host ports `25565` and `19132/udp` published for LAN access
-- Geyser proxy automatically translates Bedrock clients to Java protocol
+- Traefik UDP router on entrypoint `bedrock` for Bedrock clients
+- Geyser-Spigot (v2.10.0): translates Bedrock protocol to Java
+- Floodgate (v2.2.5): manages Bedrock Edition player authentication
+- Both plugins installed in `minecraft-data/plugins/` directory
+- Cross-platform play enabled: Java and Bedrock players share the same world
+
+#### Geyser and Floodgate Plugin Installation
+
+The Minecraft container includes both Geyser and Floodgate plugins:
+
+1. **Geyser-Spigot**: Acts as a proxy for Bedrock clients, translating the Bedrock protocol to Java Edition
+2. **Floodgate**: Provides secure authentication for Bedrock players without requiring a Microsoft account
+
+Both plugins are downloaded and placed in `minecraft-data/plugins/` where the container loads them on startup.
+
+To manually add or update plugins:
+
+```bash
+# Download latest versions
+wget https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot -O minecraft-data/plugins/geyser-spigot.jar
+wget https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot -O minecraft-data/plugins/floodgate-spigot.jar
+
+# Restart the server
+docker compose restart minecraft
+```
 
 ### DuckDNS test page
 

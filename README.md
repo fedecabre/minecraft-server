@@ -7,8 +7,8 @@ This repository contains a Docker-based Minecraft server setup that uses Traefik
 - **TLS Encryption** - Automatic HTTPS certificates from Let's Encrypt
 - **Traefik Reverse Proxy** - Professional-grade reverse proxy and load balancer
 - **DuckDNS Integration** - Free dynamic DNS with automatic IP updates
-- **Paper Server** - Modern Minecraft server (1.21.11) with optimization
-- **Cross-Platform Support** - Geyser proxy for Bedrock Edition players
+- **Paper Server** - Modern Minecraft server (1.21.1-133) with optimization
+- **Cross-Platform Support** - Integrated Geyser & Floodgate for seamless Bedrock Edition play
 - **Docker Containerization** - Easy deployment and management
 - **Health Checks** - Automated service monitoring and restart
 - **Resource Limits** - Controlled CPU and memory allocation
@@ -84,12 +84,16 @@ Connect to server at `myserver.duckdns.org:49154`
 
 ### Bedrock Edition Support
 
-Bedrock players can connect to the same world using Geyser proxy translation:
+Bedrock players can connect to the same world using integrated Geyser proxy:
 
 - **Address**: `myserver.duckdns.org`
 - **Port**: `49155` (UDP)
 
-Geyser automatically translates Bedrock protocol to Java, allowing cross-platform play.
+**How it works:**
+- Geyser automatically translates Bedrock protocol to Java Edition
+- Floodgate manages Bedrock player authentication
+- Both Java and Bedrock players share the same world and can play together
+- Requires UDP port forwarding on your router (external 49155 → internal 19132)
 
 ## Port Forwarding
 
