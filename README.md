@@ -161,7 +161,7 @@ Creates compressed backup in `./docker/backups/`
 
 ```bash
 crontab -e
-# Add: 0 2 * * * cd /path/to/minecraft-server && ./backup.sh
+# Add: 0 2 * * * /path/to/minecraft-server/backup.sh
 ```
 
 Daily backup at 2 AM, keeps last 7 backups.
@@ -206,7 +206,7 @@ If the certificate is still not issued, verify the DuckDNS token and DNS challen
 ### Connection Issues
 ```bash
 # Test port accessibility
-nc -zv myserver.duckdns.org 16384
+nc -zv myserver.duckdns.org 49154
 
 # Check Docker logs
 docker compose logs traefik     # Proxy logs
@@ -252,7 +252,7 @@ minecraft-server/
 
 ## Minecraft Server Details
 
-- **Version**: 1.21.11 (Paper - production optimized)
+- **Version**: 1.21.1 (Paper - production optimized)
 - **Memory**: 4GB allocated
 - **Plugins**: bStats, Spark profiler built-in
 - **Port**: 25565 (proxied through Traefik)
