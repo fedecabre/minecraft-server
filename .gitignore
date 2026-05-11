@@ -1,47 +1,19 @@
 # Environment variables
 .env
 
-# Ignore the entire Minecraft runtime directory
+# Minecraft runtime directory (entire folder)
 minecraft-data/
 
-# Minecraft world data
-minecraft-data/world/
-minecraft-data/world_nether/
-minecraft-data/world_the_end/
-
-# Logs
-minecraft-data/logs/
+# Docker runtime
 docker/logs/
-
-# Cache and temporary files
-minecraft-data/cache/
-docker/import/upload/
-
-# Runtime server files created by the Minecraft Docker image
-minecraft-data/.paper.env
-minecraft-data/.papermc-manifest.json
-minecraft-data/.rcon-cli.env
-minecraft-data/.rcon-cli.yaml
-
-# Generated server libraries and runtime artifacts
-minecraft-data/libraries/
-minecraft-data/versions/
-minecraft-data/paper-*.jar
-minecraft-data/plugins/.paper-remapped/
-minecraft-data/plugins/spark/tmp/
-
-# Backups
 docker/backups/
+docker/import/upload/
 
 # Certificates
 letsencrypt/acme.json
 
-# Database files (if any)
-minecraft-data/config/db/
-
-# Plugins data (some plugins store sensitive data)
-minecraft-data/plugins/*/config.yml
-minecraft-data/plugins/*/data/
+# Java binaries
+*.jar
 
 # OS generated files
 .DS_Store
