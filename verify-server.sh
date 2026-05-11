@@ -9,8 +9,8 @@ if [[ -f .env ]]; then
   export $(grep -v '^#' .env | xargs)
 fi
 
-DOMAIN_TRAEFIK=${DOMAIN_TRAEFIK:-fedecabre.duckdns.org}
-DOMAIN_MINECRAFT=${DOMAIN_MINECRAFT:-$DOMAIN_TRAEFIK}
+DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN:-}
+DOMAIN="${DUCKDNS_DOMAIN:+${DUCKDNS_DOMAIN}.duckdns.org}"
 
 # Function to get current public IP
 get_public_ip() {
@@ -19,32 +19,24 @@ get_public_ip() {
 
 # Function to get DuckDNS current IP
 get_duckdns_ip() {
-  nslookup "$DOMAIN_TRAEFIK" 2>/dev/null | grep -A1 "Name:" | tail -1 | awk '{print $2}' || echo ""
-}
-
-# Function to update DuckDNS IP
-update_duckdns() {
-  local token="$1"
-  local domain="$2"
-  local ip="$3"
-  curl -s "https://www.duckdns.org/update?domains=${domain}&token=${token}&ip=${ip}"
+  nslookup "$1" 2>/dev/null | grep -A1 "Name:" | tail -1 | awk '{print $2}' || echo ""
 }
 
 echo "== DuckDNS IP Check =="
-if [[ -n "${DUCKDNS_TOKEN:-}" ]]; then
+if [[ -n "${DUCKDNS_TOKEN:-}" && -n "$DOMAIN" ]]; then
   current_ip=$(get_public_ip)
-  duckdns_ip=$(get_duckdns_ip)
+  duckdns_ip=$(get_duckdns_ip "$DOMAIN")
 
   if [[ -z "$current_ip" ]]; then
     echo "Warning: Could not determine current public IP"
   elif [[ -z "$duckdns_ip" ]]; then
-    echo "Warning: Could not resolve DuckDNS IP for $DOMAIN_TRAEFIK"
+    echo "Warning: Could not resolve DuckDNS IP for $DOMAIN"
   elif [[ "$current_ip" != "$duckdns_ip" ]]; then
     echo "IP mismatch detected:"
     echo "  Current public IP: $current_ip"
     echo "  DuckDNS IP: $duckdns_ip"
     echo "  Updating DuckDNS..."
-    update_result=$(update_duckdns "$DUCKDNS_TOKEN" "${DOMAIN_TRAEFIK%.duckdns.org}" "$current_ip")
+    update_result=$(curl -s "https://www.duckdns.org/update?domains=${DUCKDNS_DOMAIN}&token=${DUCKDNS_TOKEN}&ip=${current_ip}")
     if [[ "$update_result" == "OK" ]]; then
       echo "  DuckDNS updated successfully"
     else
@@ -54,9 +46,10 @@ if [[ -n "${DUCKDNS_TOKEN:-}" ]]; then
     echo "DuckDNS IP is current: $duckdns_ip"
   fi
 else
-  echo "Skipping DuckDNS check (DUCKDNS_TOKEN not set)"
+  echo "Skipping DuckDNS check (DUCKDNS_TOKEN or DUCKDNS_DOMAIN not set)"
 fi
 
+echo ""
 echo "== Docker status =="
 docker compose ps
 
@@ -70,36 +63,13 @@ fi
 
 echo ""
 echo "== Local port check =="
-if command -v nc >/dev/null 2>&1; then
-  nc -zv localhost 25565
-else
-  if bash -c '</dev/tcp/localhost/25565' >/dev/null 2>&1; then
-    echo "localhost:25565 is open"
+for port in 25565 19132; do
+  if bash -c "</dev/tcp/localhost/$port" >/dev/null 2>&1; then
+    echo "localhost:$port is open"
   else
-    echo "localhost:25565 is closed or unreachable"
-    exit 1
+    echo "localhost:$port is closed"
   fi
-fi
-
-echo ""
-echo "== External HTTP test =="
-set +e
-curl -I -m 10 "http://${DOMAIN_TRAEFIK}:49152/test"
-curl -Ik -m 10 "https://${DOMAIN_TRAEFIK}:49153/test"
-
-echo ""
-echo "== External Minecraft TCP test =="
-if command -v nc >/dev/null 2>&1; then
-  nc -zv "${DOMAIN_MINECRAFT}" 49154
-else
-  if bash -c ">/dev/tcp/${DOMAIN_MINECRAFT}/49154" >/dev/null 2>&1; then
-    echo "${DOMAIN_MINECRAFT}:49154 is open"
-  else
-    echo "${DOMAIN_MINECRAFT}:49154 is closed or unreachable"
-    exit 1
-  fi
-fi
-set -e
+done
 
 echo ""
 echo "Verification complete."

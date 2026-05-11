@@ -1,323 +1,105 @@
-# Secure Minecraft Server with Traefik and DuckDNS
+# Minecraft Server (Docker)
 
-This repository contains a Docker-based Minecraft server setup that uses Traefik as a reverse proxy with TLS termination via Let's Encrypt and DuckDNS for free dynamic DNS hosting.
+Personal Minecraft server running Paper with cross-platform Bedrock support via Geyser/Floodgate.
 
 ## Features
 
-- **TLS Encryption** - Automatic HTTPS certificates from Let's Encrypt
-- **Traefik Reverse Proxy** - Professional-grade reverse proxy and load balancer
-- **DuckDNS Integration** - Free dynamic DNS with automatic IP updates
-- **Paper Server** - Modern Minecraft server (1.21.1-133) with optimization
-- **Cross-Platform Support** - Integrated Geyser & Floodgate for seamless Bedrock Edition play
-- **Docker Containerization** - Easy deployment and management
-- **Health Checks** - Automated service monitoring and restart
-- **Resource Limits** - Controlled CPU and memory allocation
-- **Backup System** - Automated world data backups with retention
+- **Paper Server** — Optimized Minecraft 1.21.1
+- **Cross-Platform** — Java + Bedrock players on the same world (Geyser & Floodgate)
+- **DuckDNS** — Free dynamic DNS with automatic IP updates
+- **Docker** — Single container, easy deployment
+- **Backup** — Automated world backups with 7-day retention
+- **Health Checks** — Auto-restart on failure
+- **Resource Limits** — 4GB RAM, 2 CPU cores
 
 ## Requirements
 
-- Docker and Docker Compose installed
-- Free DuckDNS account (or your own domain)
-- DuckDNS token for DNS-01 challenge
-- **Port forwarding configured on router** for Minecraft (high ports on Freebox)
-- 4GB+ RAM recommended
-- Linux or WSL2 environment
+- Docker and Docker Compose
+- DuckDNS account ([duckdns.org](https://www.duckdns.org/))
+- Port forwarding on your router
+- 4GB+ RAM
+- Linux or WSL2
 
 ## Quick Setup
-
-### 1. Clone and Configure
 
 ```bash
 git clone https://github.com/fedecabre/minecraft-server.git
 cd minecraft-server
 cp .env.example .env
-```
-
-### 2. Set Up Free DuckDNS Domain
-
-1. Visit [duckdns.org](https://www.duckdns.org/)
-2. Login with Google/GitHub/Twitter
-3. Create subdomain (e.g., `myserver`)
-4. Get your token from the dashboard
-
-### 3. Update Configuration
-
-Edit `.env` file:
-
-```bash
-DOMAIN_ROOT=duckdns.org
-DOMAIN_TRAEFIK=myserver.duckdns.org
-DOMAIN_MINECRAFT=myserver.duckdns.org
-EMAIL=your-email@example.com
-DUCKDNS_TOKEN=your_duckdns_token_here
-MCADMIN_PASS=your_secure_password
-```
-
-### 4. Launch Server
-
-```bash
+# Edit .env with your DuckDNS domain and token
 docker compose up -d
 ```
 
-### 5. Verify Setup
-
-```bash
-docker compose logs minecraft     # Check Minecraft startup
-docker compose ps                 # Verify containers running
-```
-
-Test the DuckDNS route at:
-
-- `https://myserver.duckdns.org:49153/test`
-- `http://myserver.duckdns.org:49152/test`
-
-Check the public Minecraft status page for the server:
-
-- `https://mcsrvstat.us/server/myserver.duckdns.org:49154`
-
-> If your Freebox blocks low ports, external standard HTTPS on `443` will not work. Use a high external port mapped to internal `80` or `16400` instead.
-
-Connect to server at `myserver.duckdns.org:49154`
-
-> This was verified as working through Freebox port forwarding to internal port `25565`.
-
-### Bedrock Edition Support
-
-Bedrock players can connect to the same world using integrated Geyser proxy:
-
-- **Address**: `myserver.duckdns.org`
-- **Port**: `49155` (UDP)
-
-**How it works:**
-- Geyser automatically translates Bedrock protocol to Java Edition
-- Floodgate manages Bedrock player authentication
-- Both Java and Bedrock players share the same world and can play together
-- Requires UDP port forwarding on your router (external 49155 → internal 19132)
-
 ## Port Forwarding
 
-Port forwarding is **REQUIRED** for Minecraft traffic. With DuckDNS DNS challenge, Let's Encrypt validation does not require external port 80 or 443.
+Forward these ports on your router to the host machine:
 
-### Required Port Mappings
+| External Port | Internal Port | Protocol | Service |
+|---|---|---|---|
+| `49154` | `25565` | TCP | Java Minecraft |
+| `49155` | `19132` | UDP | Bedrock Minecraft |
 
-### For Freebox Users (France)
+> Freebox users: access router at `http://192.168.1.254/` → Paramètres → Réseau → Redirection de ports
 
-1. **Access Freebox Admin Panel**
-   - Open browser: `http://192.168.1.254/` or `mafreebox.free.fr`
-   - Login: username `freebox`, password on the back of the router
+### Connecting
 
-2. **Navigate to Port Forwarding**
-   - Go to **Paramètres** → **Réseau** → **NAT/UPnP** or **Redirection de ports**
-
-3. **Add the HTTP and optional HTTPS Port Forwarding Rules**
-   - External Port: `49152`
-   - Internal IP: `<your-machine-ip>` (e.g. `192.168.1.4`)
-   - Internal Port: `80`
-   - Protocol: TCP
-
-   Optional HTTPS mapping:
-   - External Port: `49153`
-   - Internal IP: `<your-machine-ip>`
-   - Internal Port: `16400`
-   - Protocol: TCP
-
-4. **Add the Java Minecraft Port Forwarding Rule**
-   - External Port: `49154`
-   - Internal IP: `<your-machine-ip>`
-   - Internal Port: `25565`
-   - Protocol: TCP
-
-5. **Add the Bedrock Minecraft Port Forwarding Rule (UDP)**
-   - External Port: `49155`
-   - Internal IP: `<your-machine-ip>`
-   - Internal Port: `19132`
-   - Protocol: UDP
-
-6. **Save and Wait**
-   - Click "Appliquer" (Apply)
-   - Wait 1-2 minutes for changes to take effect
-
-7. **Verify Port Forwarding**
-   ```bash
-   nslookup myserver.duckdns.org
-   
-   docker compose down
-   docker compose up -d
-   
-   docker compose logs traefik | grep -i "acme\|certificate"
-   ```
+- **Java Edition**: `mysubdomain.duckdns.org:49154`
+- **Bedrock Edition**: `mysubdomain.duckdns.org:49155` (UDP)
 
 ## Backup & Recovery
 
-### Manual Backup
-
 ```bash
+# Manual backup
 ./backup.sh
-```
 
-Creates compressed backup in `./docker/backups/`
-
-### Automated Backups (Linux/WSL)
-
-```bash
+# Automated (crontab)
 crontab -e
 # Add: 0 2 * * * /path/to/minecraft-server/backup.sh
 ```
 
-Daily backup at 2 AM, keeps last 7 backups.
+Backups saved to `docker/backups/`, keeps last 7.
 
-## Configuration Files
-
-### `.env` (❌ Never commit!)
-**IMPORTANT**: This file contains passwords and secrets. Keep it private!
-- Already in `.gitignore`
-- Never push to public repositories
-- Rotate credentials if exposed
-
-### `.env.example`
-Template showing required variables. Safe to commit and share.
-
-### `compose.yml`
-Main Docker Compose configuration with Traefik, Minecraft, and resource limits.
-
-## Troubleshooting
-
-### Certificate Issues (ACME)
-- Confirm `DUCKDNS_TOKEN` is set in `.env`
-- Make sure `myserver.duckdns.org` resolves to your public IP
-- Port 80 and 443 are not required for DNS-01 validation
-- Ensure Traefik can write to `/letsencrypt/acme.json`
-- Wait 5 minutes for DNS updates and Traefik propagation
+## Server Verification
 
 ```bash
-# Test DNS resolution
-nslookup myserver.duckdns.org
-
-# Check certificate acquisition in logs
-docker compose logs traefik | grep -i "acme\|certificate"
-
-# Restart services if needed
-docker compose down
-docker compose up -d
+./verify-server.sh
 ```
 
-If the certificate is still not issued, verify the DuckDNS token and DNS challenge setup.
+Checks: DuckDNS IP sync, container health, port availability.
 
-### Connection Issues
+## DuckDNS Auto-Update
+
+`verify-server.sh` automatically updates your DuckDNS IP when it detects a mismatch. For continuous updates:
+
 ```bash
-# Test port accessibility
-nc -zv myserver.duckdns.org 49154
-
-# Check Docker logs
-docker compose logs traefik     # Proxy logs
-docker compose logs minecraft    # Server logs
+crontab -e
+# Add: 0 * * * * /path/to/minecraft-server/verify-server.sh > /dev/null 2>&1
 ```
-
-### Update IP (if dynamic)
-DuckDNS auto-updates your IP, but you can force it when your public IPv4 changes:
-```bash
-curl "https://www.duckdns.org/update?domains=fedecabre&token=YOUR_TOKEN&ip="
-```
-
-## Security Best Practices
-
-1. **Never commit `.env`** - it contains passwords
-2. **Strong passwords** - Use random generation:
-   ```bash
-   openssl rand -base64 12
-   ```
-3. **Rotate credentials** - Especially if accidentally exposed
-4. **Firewall** - Only expose necessary ports
-5. **Updates** - Keep Docker images updated:
-   ```bash
-   docker compose pull
-   docker compose up -d
-   ```
 
 ## Directory Structure
 
 ```
 minecraft-server/
-├── compose.yml                 # Production configuration
-├── .env                        # ❌ Private credentials (gitignored)
-├── .env.example                # ✓ Template (safe to share)
-├── .gitignore                  # Prevents .env from being committed
-├── backup.sh                   # Backup automation script
-├── verify-server.sh            # Health check & DuckDNS IP sync
-├── minecraft-data/             # World data & server files (gitignored)
-└── docker/
-    ├── backups/               # Backup archives
-    └── test-site/             # DuckDNS verification page
+├── compose.yml          # Docker Compose (single Minecraft container)
+├── .env                 # ❌ Private credentials (gitignored)
+├── .env.example         # ✓ Template (safe to share)
+├── backup.sh            # World backup script
+├── verify-server.sh     # Health check & DuckDNS IP sync
+└── minecraft-data/      # Server runtime data (gitignored)
 ```
 
-## Minecraft Server Details
-
-- **Version**: 1.21.1 (Paper - production optimized)
-- **Memory**: 4GB allocated
-- **Plugins**: bStats, Spark profiler built-in
-- **Port**: 25565 (proxied through Traefik)
-- **World Location**: `minecraft-data/world/`
-
-## DuckDNS Auto-Update (Optional)
-
-Keep IP current automatically:
+## Commands
 
 ```bash
-# Create update script
-cat > update-duckdns.sh << 'EOF'
-#!/bin/bash
-TOKEN="your_duckdns_token"
-DOMAIN="myserver"
-curl "https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ip="
-EOF
-
-chmod +x update-duckdns.sh
-
-# Add to crontab for hourly updates
-crontab -e
-# Add: 0 * * * * /path/to/update-duckdns.sh
+docker compose up -d          # Start
+docker compose down           # Stop
+docker compose logs minecraft # View logs
+docker compose restart        # Restart
+docker compose pull && docker compose up -d  # Update image
 ```
 
-> **Note**: The `./verify-server.sh` script also automatically checks and updates your DuckDNS IP when run, making manual scripts less necessary.
+## Security
 
-## Support
-
-- Check logs: `docker compose logs`
-- View config: `cat .env.example`
-- Restart services: `docker compose down && docker compose up -d`
-
-### Checking Server Status
-
-To verify the server is running correctly:
-
-```bash
-# Optional: make the helper executable once
-chmod +x ./verify-server.sh
-
-# Run the verification test (includes automatic DuckDNS IP check)
-./verify-server.sh
-```
-
-If you want to inspect individual services manually:
-
-```bash
-# Check container status
-docker compose ps
-
-# Test port connectivity
-nc -zv localhost 25565
-
-# View logs
-docker compose logs -f
-```
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) - Minecraft server image
-- [itzg/mc-proxy](https://github.com/itzg/docker-mc-proxy) - Velocity proxy image
-- [Traefik](https://traefik.io/) - Edge router and reverse proxy
-- [Velocity](https://velocitypowered.com/) - Modern Minecraft proxy
+- `.env` is gitignored — never commit secrets
+- `ONLINE_MODE=TRUE` — Mojang authentication enforced
+- Only ports 25565 (TCP) and 19132 (UDP) exposed

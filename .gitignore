@@ -4,13 +4,8 @@
 # Minecraft runtime directory (entire folder)
 minecraft-data/
 
-# Docker runtime
-docker/logs/
+# Backup archives
 docker/backups/
-docker/import/upload/
-
-# Certificates
-letsencrypt/acme.json
 
 # Java binaries
 *.jar

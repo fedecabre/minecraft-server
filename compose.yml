@@ -1,55 +1,19 @@
 services:
-  traefik:
-    image: traefik:v2.11
-    container_name: traefik
-    command:
-      - --entrypoints.web.address=:80
-      - --entrypoints.minecraft.address=:25565
-      - --entrypoints.websecure.address=:16400
-      - --entrypoints.bedrock.address=:19132/udp
-      - --providers.docker=true
-      - --api.dashboard=true
-      - --certificatesresolvers.myresolver.acme.dnschallenge.provider=duckdns
-      - --certificatesresolvers.myresolver.acme.dnschallenge.delayBeforeCheck=15s
-      - --certificatesresolvers.myresolver.acme.email=${EMAIL}
-      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
-    environment:
-      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
-    ports:
-      - "80:80"
-      - "443:16400"
-      - "16400:16400"
-      - "25565:25565"
-      - "19132:19132/udp"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`${DOMAIN_TRAEFIK}`)"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
-      - "traefik.http.routers.traefik.service=api@internal"
-
   minecraft:
     image: itzg/minecraft-server
     container_name: minecraft
     environment:
       EULA: "TRUE"
       VERSION: "1.21.1"
-      PAPER_VERSION: "26.1.2-62"
+      TYPE: "PAPER"
       MEMORY: "4G"
       ONLINE_MODE: "TRUE"
       SERVER_NAME: "${MCADMIN_SERVER_NAME}"
-      TYPE: "PAPER"
       ENABLE_GEYSER: "true"
       ENABLE_FLOODGATE: "true"
+    ports:
+      - "25565:25565"
+      - "19132:19132/udp"
     volumes:
       - ./minecraft-data:/data
     restart: unless-stopped
@@ -63,30 +27,3 @@ services:
         limits:
           memory: 4G
           cpus: '2.0'
-    labels:
-      - "traefik.enable=true"
-      - "traefik.tcp.routers.minecraft.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.minecraft.entrypoints=minecraft"
-      - "traefik.tcp.routers.minecraft.service=minecraft"
-      - "traefik.tcp.services.minecraft.loadbalancer.server.port=25565"
-
-  duckdns-test:
-    image: nginx:alpine
-    container_name: duckdns-test
-    volumes:
-      - ./docker/test-site:/usr/share/nginx/html:ro
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.duckdns-test.rule=Host(`${DOMAIN_TRAEFIK}`) && PathPrefix(`/test`)"
-      - "traefik.http.routers.duckdns-test.entrypoints=web"
-      - "traefik.http.routers.duckdns-test.middlewares=duckdns-test-strip"
-      - "traefik.http.services.duckdns-test.loadbalancer.server.port=80"
-      - "traefik.http.middlewares.duckdns-test-strip.stripprefix.prefixes=/test"
-      - "traefik.http.routers.duckdns-test-secure.rule=Host(`${DOMAIN_TRAEFIK}`) && PathPrefix(`/test`)"
-      - "traefik.http.routers.duckdns-test-secure.entrypoints=websecure"
-      - "traefik.http.routers.duckdns-test-secure.tls.certresolver=myresolver"
-      - "traefik.http.routers.duckdns-test-secure.middlewares=duckdns-test-strip"
-      - "traefik.http.routers.duckdns-test-secure.service=duckdns-test"
-
- 
