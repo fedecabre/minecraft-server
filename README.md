@@ -51,7 +51,6 @@ DOMAIN_MINECRAFT=myserver.duckdns.org
 EMAIL=your-email@example.com
 DUCKDNS_TOKEN=your_duckdns_token_here
 MCADMIN_PASS=your_secure_password
-CRAFTY_PASS=your_secure_password
 ```
 
 ### 4. Launch Server
@@ -244,12 +243,11 @@ minecraft-server/
 ├── .env.example                # ✓ Template (safe to share)
 ├── .gitignore                  # Prevents .env from being committed
 ├── backup.sh                   # Backup automation script
-├── minecraft-data/             # World data & server files
-├── docker/                     # Docker container configs
-│   ├── backups/               # Backup archives
-│   ├── config/                # Crafty controller config
-│   └── logs/                  # Service logs
-└── velocity-config/            # Velocity proxy config (optional)
+├── verify-server.sh            # Health check & DuckDNS IP sync
+├── minecraft-data/             # World data & server files (gitignored)
+└── docker/
+    ├── backups/               # Backup archives
+    └── test-site/             # DuckDNS verification page
 ```
 
 ## Minecraft Server Details
