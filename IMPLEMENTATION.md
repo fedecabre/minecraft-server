@@ -9,8 +9,7 @@ The stack is designed for a home network with a Freebox router that blocks low e
 ## Architecture
 
 - `traefik`: reverse proxy, ACME TLS, HTTP/HTTPS ingress, TCP proxy for Minecraft, UDP proxy for Bedrock
-- `minecraft`: Paper Minecraft server running on internal port `25565` (Java Edition)
-- `geyser`: Geyser proxy translating Bedrock protocol to Java on port `19132` (Bedrock Edition)
+- `minecraft`: Paper Minecraft server with built-in Geyser proxy for Bedrock Edition support
 - `duckdns-test`: nginx static page used to verify DNS and HTTP routing
 
 ## Key Components
@@ -32,20 +31,13 @@ Traefik also uses DuckDNS for the DNS-01 challenge:
 
 ### Minecraft service
 
-The Minecraft container runs:
+The Minecraft container runs Paper server with built-in Geyser support:
 
-- internal port `25565`
-- Traefik TCP router on entrypoint `minecraft`
-- host port `25565` published for LAN access
-
-### Geyser service
-
-Geyser translates Bedrock Edition clients to Java Edition protocol:
-
-- internal port `19132` (UDP) for Bedrock clients
-- connects to Java server at `minecraft:25565`
-- Traefik UDP router on entrypoint `bedrock`
-- Allows cross-platform play between Java and Bedrock editions
+- internal port `25565` (Java Edition)
+- internal port `19132` (Bedrock Edition via Geyser)
+- Traefik TCP router on entrypoint `minecraft` for Java clients
+- host ports `25565` and `19132/udp` published for LAN access
+- Geyser proxy automatically translates Bedrock clients to Java protocol
 
 ### DuckDNS test page
 
@@ -78,7 +70,7 @@ Required variables:
 - `443:16400` to Traefik `websecure`
 - `16400:16400` as an alternate HTTPS port inside the stack
 - `25565:25565` for Minecraft TCP (Java)
-- `19132:19132/udp` for Bedrock UDP (Geyser)
+- `19132:19132/udp` for Bedrock UDP (built into Minecraft container)
 
 ### Freebox limitations
 
@@ -221,8 +213,6 @@ minecraft-server/
 ├── verify-server.sh
 ├── docker/test-site/
 │   └── index.html
-├── geyser-config/
-│   └── config.yml
 ├── minecraft-data/
 └── letsencrypt/
 ```
