@@ -44,7 +44,8 @@ services:
     container_name: minecraft
     environment:
       EULA: "TRUE"
-      VERSION: "LATEST"
+      VERSION: "1.21.1"
+      PAPER_VERSION: "26.1.2-62"
       MEMORY: "4G"
       ONLINE_MODE: "TRUE"
       SERVER_NAME: "${MCADMIN_SERVER_NAME}"
@@ -53,8 +54,6 @@ services:
       ENABLE_FLOODGATE: "true"
     volumes:
       - ./minecraft-data:/data
-    ports:
-      - "19132:19132/udp"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mc-health"]
