@@ -10,7 +10,7 @@ if [[ -f .env ]]; then
 fi
 
 DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN:-}
-DOMAIN="${DUCKDNS_DOMAIN:+${DUCKDNS_DOMAIN}.duckdns.org}"
+DOMAIN="${DOMAIN_TRAEFIK:-${DUCKDNS_DOMAIN:+${DUCKDNS_DOMAIN}.duckdns.org}}"
 
 # Function to get current public IP
 get_public_ip() {
@@ -70,6 +70,43 @@ for port in 25565 19132; do
     echo "localhost:$port is closed"
   fi
 done
+
+echo ""
+echo "== External DuckDNS Connectivity Test =="
+if [[ -n "$DOMAIN" ]]; then
+  # Test DNS resolution
+  echo "1. DNS Resolution for $DOMAIN"
+  if dns_result=$(nslookup "$DOMAIN" 2>&1); then
+    ip_addr=$(echo "$dns_result" | grep "Address:" | tail -1 | awk '{print $2}')
+    if [[ -n "$ip_addr" ]]; then
+      echo "   ✅ Resolves to: $ip_addr"
+    else
+      echo "   ❌ Could not extract IP from DNS response"
+    fi
+  else
+    echo "   ❌ DNS resolution failed"
+  fi
+
+  # Test Java Edition (TCP port 49154)
+  echo ""
+  echo "2. Java Edition (TCP port 49154)"
+  if nc -zv "$DOMAIN" 49154 2>&1 | grep -q "succeeded"; then
+    echo "   ✅ Port 49154 is accessible"
+  else
+    echo "   ❌ Port 49154 is NOT accessible"
+  fi
+
+  # Test Bedrock Edition (UDP port 49155)
+  echo ""
+  echo "3. Bedrock Edition (UDP port 49155)"
+  if timeout 2 bash -c "echo 'test' > /dev/udp/$DOMAIN/49155" 2>/dev/null; then
+    echo "   ✅ Port 49155 (UDP) is accessible"
+  else
+    echo "   ℹ️  Port 49155 (UDP) test inconclusive (may still be working)"
+  fi
+else
+  echo "Skipping external DuckDNS test (DUCKDNS_DOMAIN not set)"
+fi
 
 echo ""
 echo "Verification complete."
