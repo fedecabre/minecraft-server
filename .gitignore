@@ -4,6 +4,9 @@
 # Minecraft runtime directory (entire folder)
 minecraft-data/
 
+# Let's Encrypt certificates (legacy - no longer used)
+letsencrypt/
+
 # Backup archives
 docker/backups/
 
