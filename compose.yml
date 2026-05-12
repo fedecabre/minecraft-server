@@ -4,9 +4,10 @@ services:
     container_name: minecraft
     environment:
       EULA: "TRUE"
-      VERSION: "1.21.1"
+      VERSION: "LATEST"
       TYPE: "PAPER"
       MEMORY: "4G"
+      REPLACE_ENV_DURING_SYNC: "true"
       ONLINE_MODE: "TRUE"
       SERVER_NAME: "${MCADMIN_SERVER_NAME}"
       ENABLE_GEYSER: "true"
