@@ -29,6 +29,30 @@ get_dns_ip() {
   dig +short "$1" | tail -n1 || echo ""
 }
 
+
+# ------------------------
+# network safety check
+# ------------------------
+
+# Your fixed Freebox IP
+FREEBOX_IP="82.66.6.94"
+
+echo "== Network Safety Check =="
+current_ip=$(get_public_ip)
+
+if [[ "$current_ip" != "$FREEBOX_IP" ]]; then
+  echo "⚠️  CAUTION: You are not connected via your Freebox!"
+  echo "   Current IP: $current_ip (expected $FREEBOX_IP)"
+  echo "   Aborting DuckDNS update to prevent service disruption."
+  
+  # Optional: skip only DuckDNS or exit the whole script
+  # exit 1 
+  DUCKDNS_DOMAIN="" # This will trigger the 'Skipping DuckDNS check' later
+else
+  echo "✅ Confirmed: Connected to Freebox network."
+fi
+
+
 # ------------------------
 # DuckDNS Check
 # ------------------------
@@ -134,6 +158,24 @@ if [[ -n "$DOMAIN" ]]; then
   echo "   ℹ Test from a real Bedrock client (4G network)."
 else
   echo "Skipping external test (DOMAIN not defined)"
+fi
+
+echo ""
+echo "== External Validation (via API) =="
+
+# On utilise || true pour éviter que le script crash si curl ou grep échouent
+check_api=$(curl -s "https://api.mcsrvstat.us/bedrock/2/${DOMAIN}" || echo "error")
+
+# Extraction plus robuste avec grep -q (quiet)
+if echo "$check_api" | grep -q '"online":true'; then
+  echo "✅ Server is VISIBLE from internet (via mcsrvstat.us)"
+  
+  # Extraction du nombre de joueurs (optionnel)
+  players=$(echo "$check_api" | grep -oP '"online":\s*\K\d+' || echo "0")
+  echo "   Players online: $players"
+else
+  echo "❌ Server is OFFLINE or API is slow"
+  echo "   (Note: Check https://mcsrvstat.us/bedrock/${DOMAIN} manually)"
 fi
 
 echo ""
